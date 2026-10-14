@@ -3,27 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Wren — a small self-hosted Discord bot</title>
-<meta name="description" content="Wren is a small, self-hosted Discord bot for role automation, welcomes and quick moderation. Slash commands only, no privileged intents, MIT licensed.">
+<title>Rill — a tiny self-hosted WebSocket relay for voice rooms</title>
+<meta name="description" content="Rill is a small self-hosted WebSocket relay for realtime voice rooms. One process, one port, no accounts.">
 <meta name="color-scheme" content="dark light">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Wren — a small self-hosted Discord bot">
-<meta property="og:description" content="Role automation, welcomes and quick moderation. Slash commands only, no privileged intents.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236ea8fe'/%3E%3Cpath d='M9 20.5c4-1 6.5-3.2 7.6-6.6.9-2.7.4-5-1.4-6.9 3.5.4 5.9 2.2 7.4 5.3 1.1 2.3 1 4.7-.3 7.1-1.6 3-4.3 4.8-8 5.5-2 .4-3.8.2-5.3-.4z' fill='%230c1015'/%3E%3C/svg%3E">
+<meta property="og:title" content="Rill — a tiny self-hosted WebSocket relay">
+<meta property="og:description" content="Realtime voice rooms over a single WebSocket endpoint. Self-hosted, no accounts, no telemetry.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c5cff'/%3E%3Cg fill='%230b0d12'%3E%3Crect x='7' y='13' width='2.6' height='6' rx='1.3'/%3E%3Crect x='12' y='9' width='2.6' height='14' rx='1.3'/%3E%3Crect x='17' y='11' width='2.6' height='10' rx='1.3'/%3E%3Crect x='22' y='14' width='2.6' height='4' rx='1.3'/%3E%3C/g%3E%3C/svg%3E">
 <style>
 :root{
-  --bg:#0c1015; --panel:#121820; --panel2:#161d27; --line:#232c38;
-  --fg:#e7edf5; --fg2:#98a5b6; --fg3:#6d7a8b;
-  --accent:#6ea8fe; --accent-soft:rgba(110,168,254,.12);
-  --green:#4ec98a; --radius:14px;
+  --bg:#0b0d12; --panel:#12151d; --panel2:#171b25; --line:#232838;
+  --fg:#e8ecf6; --fg2:#98a2b8; --fg3:#6b7690;
+  --accent:#7c5cff; --accent2:#42d0c8; --accent-soft:rgba(124,92,255,.14);
+  --green:#3fd18b; --radius:14px;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
   --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 }
 html[data-theme="light"]{
-  --bg:#ffffff; --panel:#f6f8fa; --panel2:#eef2f6; --line:#d7dee6;
-  --fg:#12171d; --fg2:#57616e; --fg3:#7b8794;
-  --accent:#1f6feb; --accent-soft:rgba(31,111,235,.09);
-  --green:#1a7f4b;
+  --bg:#ffffff; --panel:#f7f8fc; --panel2:#eff2f8; --line:#d9dfeb;
+  --fg:#141824; --fg2:#525c72; --fg3:#7b8598;
+  --accent:#5b39f0; --accent2:#0f9d95; --accent-soft:rgba(91,57,240,.09); --green:#12855a;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -43,21 +42,21 @@ nav a:hover{color:var(--fg);background:var(--panel2);text-decoration:none}
 .toggle{margin-left:8px;width:34px;height:34px;display:grid;place-items:center;background:var(--panel2);
   border:1px solid var(--line);border-radius:9px;color:var(--fg2);cursor:pointer;font-size:15px;line-height:1}
 .toggle:hover{color:var(--fg)}
-@media(max-width:760px){nav a{padding:7px 9px;font-size:13.5px}}
+@media(max-width:780px){nav a{padding:7px 9px;font-size:13.5px}}
 
 .hero{padding:64px 0 46px;border-bottom:1px solid var(--line)}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--fg2);
   background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 13px}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(78,201,138,.16)}
-h1{margin:20px 0 0;font-size:clamp(32px,5.2vw,48px);line-height:1.12;letter-spacing:-.025em;font-weight:700}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(63,209,139,.16)}
+h1{margin:20px 0 0;font-size:clamp(31px,5vw,46px);line-height:1.12;letter-spacing:-.025em;font-weight:700}
 h1 .sub{color:var(--fg3);font-weight:600}
-.lede{margin:16px 0 0;max-width:60ch;font-size:17.5px;color:var(--fg2)}
+.lede{margin:16px 0 0;max-width:62ch;font-size:17.5px;color:var(--fg2)}
 .cta{display:flex;flex-wrap:wrap;gap:11px;margin-top:28px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 19px;border-radius:10px;
   font-size:15px;font-weight:550;border:1px solid transparent;cursor:pointer}
 .btn:hover{text-decoration:none}
-.btn.primary{background:var(--accent);color:#07121f}
-.btn.primary:hover{filter:brightness(1.07)}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
 .btn.ghost{background:var(--panel);border-color:var(--line);color:var(--fg)}
 .btn.ghost:hover{background:var(--panel2)}
 .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
@@ -80,14 +79,13 @@ th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--line);vert
 th{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg3);font-weight:600;background:var(--panel2)}
 tbody tr:last-child td{border-bottom:none}
 td code{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:1.5px 6px;font-size:13.2px;color:var(--fg)}
-td .arg{color:var(--fg3);font-family:var(--mono);font-size:12.6px}
 
 pre{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
   padding:17px 19px;overflow-x:auto;font-size:13.6px;line-height:1.75;color:var(--fg)}
 pre .c{color:var(--fg3)}
-pre .k{color:var(--accent)}
+pre .k{color:var(--accent2)}
 .split{display:grid;gap:18px;grid-template-columns:1.05fr .95fr;align-items:start}
-@media(max-width:820px){.split{grid-template-columns:1fr}}
+@media(max-width:840px){.split{grid-template-columns:1fr}}
 .steps{margin:0;padding:0;list-style:none;counter-reset:s}
 .steps li{position:relative;padding:0 0 18px 38px;counter-increment:s;color:var(--fg2);font-size:14.8px}
 .steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:24px;height:24px;border-radius:7px;
@@ -123,101 +121,98 @@ footer a{color:var(--fg2)}
 <header>
   <div class="wrap bar">
     <a class="brand" href="#top" style="color:inherit">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#6ea8fe"/><path d="M9 20.5c4-1 6.5-3.2 7.6-6.6.9-2.7.4-5-1.4-6.9 3.5.4 5.9 2.2 7.4 5.3 1.1 2.3 1 4.7-.3 7.1-1.6 3-4.3 4.8-8 5.5-2 .4-3.8.2-5.3-.4z" fill="#0c1015"/></svg>
-      Wren
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#7c5cff"/><g fill="#0b0d12"><rect x="7" y="13" width="2.6" height="6" rx="1.3"/><rect x="12" y="9" width="2.6" height="14" rx="1.3"/><rect x="17" y="11" width="2.6" height="10" rx="1.3"/><rect x="22" y="14" width="2.6" height="4" rx="1.3"/></g></svg>
+      Rill
     </a>
     <nav>
-      <a href="#features">Features</a>
-      <a href="#commands">Commands</a>
+      <a href="#how">How it works</a>
+      <a href="#protocol">Protocol</a>
       <a href="#selfhost">Self-hosting</a>
       <a href="#changelog">Changelog</a>
-      <button class="toggle" id="t" type="button" aria-label="Toggle colour scheme">◇</button>
+      <button class="toggle" id="t" type="button" aria-label="Toggle colour scheme">◐</button>
     </nav>
   </div>
 </header>
 
 <main id="top">
   <div class="wrap hero">
-    <span class="eyebrow"><span class="dot"></span> v1.4.2 · MIT licensed</span>
-    <h1>Wren <span class="sub">— a small self-hosted Discord bot</span></h1>
+    <span class="eyebrow"><span class="dot"></span> v0.9.3 · MIT licensed</span>
+    <h1>Rill <span class="sub">— a tiny self-hosted WebSocket relay for voice rooms</span></h1>
     <p class="lede">
-      Role automation, welcomes and quick moderation for small communities.
-      Slash commands only, no privileged intents, and a single SQLite file you can back up with <code>cp</code>.
+      One process, one port, one WebSocket endpoint. Rill relays audio frames between the members of a
+      room without accounts, databases or a control plane. Bring your own host and you are done.
     </p>
     <div class="cta">
       <a class="btn primary" href="#selfhost">Self-hosting guide</a>
-      <a class="btn ghost" href="#commands">Command reference</a>
+      <a class="btn ghost" href="#protocol">Protocol reference</a>
     </div>
     <div class="badges">
       <span class="badge">python ≥ 3.11</span>
-      <span class="badge">discord.py 2.4</span>
-      <span class="badge">sqlite · no external services</span>
-      <span class="badge">39 slash commands</span>
+      <span class="badge">websocket only</span>
+      <span class="badge">no database</span>
+      <span class="badge">~40 MB resident</span>
     </div>
   </div>
 
-  <section id="features">
+  <section id="how">
     <div class="wrap">
-      <h2>What it does</h2>
+      <h2>How it works</h2>
       <p class="section-note">
-        Wren is deliberately small. Everything below is a slash command or a per-guild setting —
-        there is no web dashboard and no account to create.
+        Rill is deliberately small. A client opens one WebSocket, names a room, and from then on the
+        relay only moves opaque frames between the members of that room.
       </p>
       <div class="grid">
         <div class="card">
-          <div class="ico">◧</div>
-          <h3>Role automation</h3>
-          <p>Self-assignable roles with a button panel, plus rules that grant a role when a member joins or reaches an age in the server.</p>
+          <div class="ico">◈</div>
+          <h3>Rooms, not channels</h3>
+          <p>A room exists as long as somebody is in it. Nothing is written to disk, so a restart never leaves stale state behind.</p>
         </div>
         <div class="card">
-          <div class="ico">✉</div>
-          <h3>Welcomes &amp; goodbyes</h3>
-          <p>Templated join and leave messages with <code>{user}</code>, <code>{count}</code> and <code>{inviter}</code> placeholders. Per-channel, per-guild.</p>
+          <div class="ico">⇄</div>
+          <h3>Relay, not mixer</h3>
+          <p>Frames are forwarded as-is. Rill never decodes audio, so it cannot resample, record or inspect what it carries.</p>
         </div>
         <div class="card">
-          <div class="ico">⚑</div>
-          <h3>Quick moderation</h3>
-          <p>Bulk delete, slowmode, timeout presets and a soft-ban list. Every action writes an audit line to a channel you choose.</p>
+          <div class="ico">⚡</div>
+          <h3>Binary frames only</h3>
+          <p>Text frames are rejected with close code <code>1003</code>. Ping and pong are handled by the relay so idle rooms survive NAT timeouts.</p>
         </div>
         <div class="card">
-          <div class="ico">⏱</div>
-          <h3>Reminders</h3>
-          <p>Natural-ish durations (<code>10m</code>, <code>2h</code>, <code>3d</code>) stored locally, delivered even after a restart.</p>
+          <div class="ico">◷</div>
+          <h3>Cheap to run</h3>
+          <p>Measured at about 40&nbsp;MB resident with eight idle rooms, and it never buffers more than one frame per member.</p>
         </div>
         <div class="card">
-          <div class="ico">⌗</div>
-          <h3>Server insights</h3>
-          <p>Member growth, join and leave counts, and channel activity over the last 7 or 30 days, rendered as plain text.</p>
+          <div class="ico">⛨</div>
+          <h3>Rooms are unguessable</h3>
+          <p>The endpoint path is derived from the deployment's own identifier, so there is no directory to enumerate.</p>
         </div>
         <div class="card">
-          <div class="ico">◇</div>
-          <h3>No privileged intents</h3>
-          <p>Message content is never requested. Wren cannot read your chat, so it needs almost no permissions to run.</p>
+          <div class="ico">⏻</div>
+          <h3>No telemetry</h3>
+          <p>Rill makes no outbound calls of its own. The only network traffic it produces is the audio it relays.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="commands">
+  <section id="protocol">
     <div class="wrap">
-      <h2>Command reference</h2>
-      <p class="section-note">A subset of the 39 commands. All of them are slash commands and respect per-channel allow and deny lists.</p>
+      <h2>Protocol</h2>
+      <p class="section-note">
+        Rill speaks plain WebSocket. Anything that can open a socket and send binary frames can use it —
+        the reference client is 30 lines of JavaScript.
+      </p>
       <div class="tbl-scroll">
         <table>
-          <thead>
-            <tr><th style="width:36%">Command</th><th>Description</th></tr>
-          </thead>
+          <thead><tr><th style="width:34%">Step</th><th>What happens</th></tr></thead>
           <tbody>
-            <tr><td><code>/help</code></td><td>List every command available to the caller, filtered by their permissions.</td></tr>
-            <tr><td><code>/ping</code></td><td>Round-trip latency to the Discord gateway and the local database.</td></tr>
-            <tr><td><code>/role add</code> <span class="arg">&lt;member&gt; &lt;role&gt;</span></td><td>Grant a role, respecting the role hierarchy.</td></tr>
-            <tr><td><code>/role panel</code> <span class="arg">[channel]</span></td><td>Post or refresh the self-assignable role panel.</td></tr>
-            <tr><td><code>/welcome set</code> <span class="arg">&lt;channel&gt; &lt;template&gt;</span></td><td>Set the join message for this server.</td></tr>
-            <tr><td><code>/purge</code> <span class="arg">&lt;count&gt;</span> <span class="arg">[member]</span></td><td>Delete up to 100 recent messages, optionally filtered by author.</td></tr>
-            <tr><td><code>/slowmode</code> <span class="arg">&lt;seconds&gt;</span> <span class="arg">[channel]</span></td><td>Set or clear slowmode on a channel.</td></tr>
-            <tr><td><code>/remind</code> <span class="arg">&lt;duration&gt; &lt;text&gt;</span></td><td>DM the caller after the given duration.</td></tr>
-            <tr><td><code>/stats</code> <span class="arg">[days]</span></td><td>Member and activity summary for this guild.</td></tr>
-            <tr><td><code>/config export</code></td><td>Dump this guild's settings as JSON.</td></tr>
+            <tr><td><code>GET &lt;path&gt;</code> with <code>Upgrade</code></td><td>The handshake completes and the socket becomes the room connection.</td></tr>
+            <tr><td><code>GET &lt;path&gt;</code> without <code>Upgrade</code></td><td>Answered with <code>426 Upgrade Required</code>, so a browser tab hitting the endpoint by accident gets a clear error.</td></tr>
+            <tr><td>Binary frame in</td><td>Forwarded to every other member of the same room.</td></tr>
+            <tr><td>Text frame in</td><td>Rejected; the connection closes with code <code>1003</code>.</td></tr>
+            <tr><td>Frame larger than the limit</td><td>Connection closes with code <code>1009</code> rather than growing the buffer.</td></tr>
+            <tr><td>All members gone</td><td>The room is dropped immediately.</td></tr>
           </tbody>
         </table>
       </div>
@@ -228,21 +223,21 @@ footer a{color:var(--fg2)}
     <div class="wrap">
       <h2>Self-hosting</h2>
       <p class="section-note">
-        Wren runs as an ordinary long-lived process. No container platform required — a VPS, a home server
-        or any host that can keep a Python process alive will do.
+        Rill is a long-lived process with no build step. If your host can keep a Python process alive,
+        it can run Rill.
       </p>
       <div class="split">
         <ol class="steps">
-          <li><b>Clone and install.</b> Only <code>discord.py</code> and <code>aiosqlite</code> are needed.</li>
-          <li><b>Create the bot.</b> In the Discord developer portal, add a bot to an application and copy its token. Enable <b>no</b> privileged intents.</li>
-          <li><b>Fill in <code>.env</code>.</b> The token, and optionally a home guild for instant command sync.</li>
-          <li><b>Invite it.</b> Generate an OAuth2 URL with the <code>bot</code> and <code>applications.commands</code> scopes.</li>
-          <li><b>Run it.</b> Behind systemd or a process manager, or <code>nohup</code> if you like living dangerously.</li>
+          <li><b>Pick an identifier.</b> A deployment identifier decides the endpoint path; every host should use its own.</li>
+          <li><b>Set the port.</b> Most platforms hand a port through the environment.</li>
+          <li><b>Run it.</b> Foreground is fine — Rill only serves, it has nothing to reconnect to.</li>
+          <li><b>Point clients at it.</b> <code>wss://your-host/&lt;path&gt;</code>, binary frames, done.</li>
+          <li><b>Check it stays up.</b> <code>/health</code> answers with two bytes, which is plenty for an uptime monitor.</li>
         </ol>
         <div>
 <pre><span class="c"># install</span>
-git clone https://github.com/wrenbot/wren.git
-cd wren
+git clone https://github.com/rill-relay/rill.git
+cd rill
 python -m venv .venv &amp;&amp; . .venv/bin/activate
 pip install -r requirements.txt
 
@@ -251,14 +246,12 @@ cp .env.example .env
 $EDITOR .env
 
 <span class="c"># run</span>
-python bot.py
+python relay.py
 
 <span class="c"># .env</span>
-<span class="k">DISCORD_TOKEN</span>=your-bot-token
-<span class="k">GUILD_ID</span>=            <span class="c"># optional: instant command sync</span>
-<span class="k">LOG_LEVEL</span>=info
-<span class="k">DATA_DIR</span>=./data
-<span class="k">TZ</span>=UTC
+<span class="k">RELAY_ID</span>=           <span class="c"># endpoint path seed, unique per host</span>
+<span class="k">PORT</span>=3000
+<span class="k">DEBUG</span>=false
 </pre>
         </div>
       </div>
@@ -268,29 +261,26 @@ python bot.py
   <section id="changelog">
     <div class="wrap">
       <h2>Changelog</h2>
-      <p class="section-note">Small, frequent releases. Anything user-visible is listed here.</p>
+      <p class="section-note">Small releases. Anything a client can observe is listed here.</p>
       <ul class="log">
         <li>
-          <div class="top"><span class="ver">v1.4.2</span><span class="date">28 Sep 2026</span></div>
+          <div class="top"><span class="ver">v0.9.3</span><span class="date">2 Oct 2026</span></div>
           <ul>
-            <li><code>/purge</code> no longer miscounts when messages are pinned.</li>
-            <li>Role sync is now a single request per guild instead of one per member.</li>
-            <li>Fixed a crash when <code>DATA_DIR</code> was relative and the process was started from another directory.</li>
+            <li>Idle rooms now answer WebSocket pings instead of closing on NAT timeout.</li>
+            <li>Oversized frames close the connection with <code>1009</code> instead of buffering.</li>
           </ul>
         </li>
         <li>
-          <div class="top"><span class="ver">v1.4.1</span><span class="date">12 Sep 2026</span></div>
+          <div class="top"><span class="ver">v0.9.2</span><span class="date">21 Sep 2026</span></div>
           <ul>
-            <li><code>/remind</code> parses durations in the guild's configured timezone.</li>
-            <li>Welcome templates fall back to a built-in default when a placeholder is missing.</li>
+            <li>The handshake rejects a non-upgrade request with <code>426</code>, making misconfiguration obvious.</li>
+            <li>Rooms are dropped as soon as the last member leaves.</li>
           </ul>
         </li>
         <li>
-          <div class="top"><span class="ver">v1.4.0</span><span class="date">30 Aug 2026</span></div>
+          <div class="top"><span class="ver">v0.9.0</span><span class="date">9 Sep 2026</span></div>
           <ul>
-            <li>Per-guild settings, so one process can serve several servers without a shared config file.</li>
-            <li>Command permissions now default to <code>manage_guild</code> rather than everyone.</li>
-            <li>Dropped the last message-content handler; Wren no longer needs any privileged intent.</li>
+            <li>First public release: one endpoint, opaque binary relay, no persistence.</li>
           </ul>
         </li>
       </ul>
@@ -302,31 +292,30 @@ python bot.py
       <h2>Questions</h2>
       <p class="section-note">The four that come up most often.</p>
       <details open>
-        <summary>Does Wren read message content?</summary>
+        <summary>Does Rill record or transcode audio?</summary>
         <p>
-          No. Every feature is a slash command or a button interaction, so the message-content intent is never
-          requested. If the developer portal shows a privileged intent as enabled for Wren, that is a
-          misconfiguration — it does not need one.
+          No. Frames are forwarded without being decoded, so the relay has nothing to record and no codec
+          to negotiate. Mixing, if you want it, belongs in the client.
         </p>
       </details>
       <details>
-        <summary>Where is my data stored?</summary>
+        <summary>Where is room state kept?</summary>
         <p>
-          A single SQLite file inside <code>DATA_DIR</code>. Nothing is sent anywhere else and there is no
-          telemetry, so copying that file is a complete backup.
+          In memory only, and only while a room has members. There is no database and no file on disk,
+          so a restart is a clean slate.
         </p>
       </details>
       <details>
-        <summary>Can I run it for more than one server?</summary>
+        <summary>Why is the endpoint path not <code>/ws</code>?</summary>
         <p>
-          Yes. Each guild has its own settings row, and a single process comfortably serves a handful of
-          small communities on a 256&nbsp;MB host.
+          Because a fixed path turns the relay into something anyone can discover and probe by guessing.
+          The path is derived per deployment and is not published.
         </p>
       </details>
       <details>
         <summary>Something is broken — where do I report it?</summary>
         <p>
-          Open an issue on GitHub with the version line printed at startup and the output of <code>/help</code>.
+          Open an issue with the version line printed at startup and the close code your client saw.
           Pull requests are welcome; keep them focused and add a changelog entry.
         </p>
       </details>
@@ -336,10 +325,10 @@ python bot.py
 
 <footer>
   <div class="wrap row">
-    <span>© 2026 Wren contributors · MIT License</span>
+    <span>© 2026 Rill contributors · MIT License</span>
     <span>
-      <a href="https://github.com/wrenbot/wren">Source</a> ·
-      <a href="#commands">Commands</a> ·
+      <a href="https://github.com/rill-relay/rill">Source</a> ·
+      <a href="#protocol">Protocol</a> ·
       <a href="#selfhost">Self-hosting</a>
     </span>
   </div>
@@ -349,7 +338,7 @@ python bot.py
 (function () {
   var root = document.documentElement, btn = document.getElementById('t');
   try {
-    var saved = localStorage.getItem('wren-theme');
+    var saved = localStorage.getItem('rill-theme');
     if (saved) { root.setAttribute('data-theme', saved); }
     else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
       root.setAttribute('data-theme', 'light');
@@ -358,7 +347,7 @@ python bot.py
   btn.addEventListener('click', function () {
     var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     root.setAttribute('data-theme', next);
-    try { localStorage.setItem('wren-theme', next); } catch (e) {}
+    try { localStorage.setItem('rill-theme', next); } catch (e) {}
   });
 })();
 </script>
